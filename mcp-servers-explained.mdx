@@ -1,0 +1,64 @@
+---
+title: "Understanding MCP Servers: The USB-C for AI Applications"
+date: "2026-04-16"
+tags: ["MCP", "Development", "AI"]
+---
+
+MCP (Model Context Protocol) is an open-source standard for connecting AI applications to external systems.
+
+Using MCP, AI applications like Claude or ChatGPT can connect to data sources (e.g. local files, databases), tools (e.g. search engines, calculators) and workflows (e.g. specialized prompts)—enabling them to access key information and perform tasks.
+
+Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic devices, MCP provides a standardized way to connect AI applications to external systems.
+
+<CustomImage
+  src="/images/mcp-simple-diagram.avif"
+  alt="MCP Architecture showing bidirectional data flow between AI applications and Data sources"
+/>
+
+## How It Works
+
+The architecture of MCP involves a centralized standardized protocol that sits between your AI applications (like Chat interfaces, IDEs, or custom AI apps) and your external data sources and tools (like PostgreSQL, Git, Slack, or Google Maps). This bidirectional data flow unlocks powerful capabilities without needing custom point-to-point integrations for every tool.
+
+### Sample Code: A Simple MCP Server
+
+Here is a basic example of how you might declare an MCP tool to fetch weather data using the official TypeScript SDK:
+
+```ts
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+
+// Initialize an MCP server
+const server = new McpServer({
+  name: "WeatherService",
+  version: "1.0.0",
+});
+
+// Register a tool that AI applications can seamlessly invoke
+server.tool(
+  "get_weather",
+  "Get the current weather for a location",
+  {
+    location: z.string().describe("The city to get weather for"),
+  },
+  async ({ location }) => {
+    // In a real application, you would call an external API here
+    const weatherData = `The weather in ${location} is 72°F and sunny.`;
+
+    return {
+      content: [{ type: "text", text: weatherData }],
+    };
+  },
+);
+
+// Start the server using stdio transport for local connection
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.log("Weather MCP Server running...");
+}
+
+main().catch(console.error);
+```
+
+By adhering to the MCP standard, we can build tools once and reuse them across various AI applications.
